@@ -16,7 +16,7 @@ total_nodes = 20
 total_objects = 10
 # Grid size
 row_size = 150
-col_size = 150
+col_size = 300
 
 # Position of node before a time step
 pos_row = [[0 for y in range(total_nodes)] for x in range(total_nodes)]
@@ -92,7 +92,7 @@ for i in range(total_nodes):
         new_nodes_in_pos[r][c] += 1
         c += 2
         if c >= sc + total_nodes * 2:
-            r += 1
+            r += 1 # row size increase by 1 after reaching limit
             if r % 2 == 0:
                 if(sc % 2 == 0):
                     c = sc
@@ -109,37 +109,43 @@ for i in range(total_nodes):
 
 
 # Nodes are considered to begin at the center                                                                           joss
-sr = int(row_size / 2) - int(total_objects / 2)
-sc = int(col_size / 2) - total_objects
-if sr % 2 == 1:
+sr = int(row_size / 2) - int(total_nodes / 2)
+sc = int(col_size / 2) - total_nodes
+
+if sr % 2 == 1: # if row is odd column is odd
     if sc % 2 == 0:
         sc += 1
 
-elif sr % 2 == 0:
+elif sr % 2 == 0: #if row is even column is even
     if sc % 2 == 1:
         sc += 1
 
 r = sr
 c = sc
+i = 0
 
-for i in range(total_objects**2):
-        obj_row[i] = r
-        obj_col[i] = c
-        objs_in_pos[r][c] += 1
-        c += 2
-        if c >= sc + total_objects * 2:
-            r += 1
-            if r % 2 == 0:
-                if(sc % 2 == 0):
-                    c = sc
-                else:
-                    c = sc + 1
-            else:
-                if (sc % 2 == 0):
-                    c = sc + 1
-                else:
-                    c = sc
+while i < total_objects**2:
+    cnt = 0
+    while cnt < int((total_objects**2)/total_nodes):
+        c = random.randint(sc,sc+total_nodes*2)
+        if r % 2 == 0:
+            if(c % 2 == 0):
+                if objs_in_pos[r][c] == 0:
+                    obj_row[i] = r
+                    obj_col[i] = c
+                    objs_in_pos[r][c] += 1
+                    i += 1
+                    cnt += 1
+        else:
+            if (c % 2 == 1):
+                if objs_in_pos[r][c] == 0:
+                    obj_row[i] = r
+                    obj_col[i] = c
+                    objs_in_pos[r][c] += 1
+                    i += 1
+                    cnt += 1
 
+    r += 1
 
 
 
@@ -160,6 +166,8 @@ canvas.pack()
 
 
 def draw(pixels):
+
+
     box = [0, 0, pixels * col_size, pixels * row_size]
     canvas.create_rectangle(box, fill='black')
 
@@ -685,18 +693,17 @@ node_move = 1
 time_step = 1
 
 while 1:
-    if time_step % 50 == 0:
-        draw(5)
-    new_time=time.time()
+    #if time_step%50==0:
+        #draw(3)
 
-    if time_step > 2000:
+    if time_step > 500:
         break
 
     time_step += 1
 
     for x in range(row_size):
         for y in range(col_size):
-            objs_cnt_all[x][y] = 0
+            objs_cnt_all[x][y] = 0 # for monitoring objects in each time step
 
     # Calculate the direction each node wants to move and number of nodes moving in a certain direction                 joss
     for i in range(total_nodes):
@@ -705,14 +712,14 @@ while 1:
             for x in range(row_size):
                 for y in range(col_size):
                     objs_cnt[x][y] = 0
-            weightX_left[i][j] = calculateXLeftNeighbours(pos_row[i][j], pos_col[i][j])
-            weightX_right[i][j] = calculateXRightNeighbours(pos_row[i][j], pos_col[i][j])
+            weightX_left[i][j] = calculateXLeftNeighbours(pos_row[i][j], pos_col[i][j]) # count number of objects in +y direction
+            weightX_right[i][j] = calculateXRightNeighbours(pos_row[i][j], pos_col[i][j]) # count number of objects in -y direction
 
             for x in range(row_size):
                 for y in range(col_size):
                     objs_cnt[x][y] = 0
-            weightY_left[i][j] = calculateYLeftNeighbours(pos_row[i][j], pos_col[i][j])
-            weightY_right[i][j] = calculateYRightNeighbours(pos_row[i][j], pos_col[i][j])
+            weightY_left[i][j] = calculateYLeftNeighbours(pos_row[i][j], pos_col[i][j]) # count number of objects in -x direction
+            weightY_right[i][j] = calculateYRightNeighbours(pos_row[i][j], pos_col[i][j]) # count number of objects in +x direction
 
             #Calculate col_moves for no object in both side
             if weightY_left[i][j][1] == 0 and weightY_right[i][j][1] == 0:
@@ -819,7 +826,7 @@ while 1:
     for x in range(total_objects**2):
         flag = 0
         while flag == 0:
-            probability = random.randint(1,18)
+            probability = random.randint(13,18)
 
             if probability == 1:
                 if obj_row[x] - 2 >= 0 and obj_col[x] - 2 >= 0:
@@ -964,7 +971,7 @@ while 1:
     for x in range(row_size):
         for y in range(col_size):
                 temp += objs_cnt_all[x][y]
-    print('time step: ' , time_step , ' ' , temp/(total_objects**2)*100)
+    print('time step: ' , time_step-1 , ' ' , temp/(total_objects**2)*100)
 
     pos_row = [t[:] for t in new_pos_row]
     pos_col = [t[:] for t in new_pos_col]
